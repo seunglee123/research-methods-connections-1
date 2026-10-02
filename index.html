@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Research Methods Connections</title>
+<meta name="description" content="A NYT-style Connections puzzle on introductory research methods. Group the sixteen terms into four hidden sets of four." />
+<style>
+  :root {
+    --ground: #faf9f5;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --tile: #efeee9;
+    --tile-sel: #4a4a48;
+    --dot-off: #d6d5cf;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Georgia", "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+  .frame { width: 100%; max-width: 520px; }
+
+  header { text-align: center; margin-bottom: 20px; }
+  .eyebrow {
+    font-family: system-ui, sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    color: #9b6fc4;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  h1.title {
+    font-size: 2.4rem;
+    margin: 0;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .status-slot {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .status {
+    text-align: center;
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: #ffffff;
+    border: 1.5px solid var(--ink);
+    border-radius: 20px;
+    padding: 6px 16px;
+    letter-spacing: 0.01em;
+  }
+  .status.win { background: var(--ink); color: #fff; }
+
+  .solved-stack { display: flex; flex-direction: column; gap: 8px; }
+  .solved-stack:not(:empty) { margin-bottom: 8px; }
+  .solved-row {
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    color: var(--ink);
+    min-height: 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .solved-row.animate { animation: rowIn 0.4s ease; }
+  .solved-name {
+    font-family: system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .solved-words {
+    font-family: system-ui, sans-serif;
+    font-size: 0.8rem;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .grid.shake { animation: shk 0.4s; }
+  .grid.hidden { display: none; }
+  .tile {
+    font-family: system-ui, sans-serif;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    height: 74px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.1s, background 0.15s;
+    padding: 2px;
+    text-align: center;
+    line-height: 1.1;
+    background: var(--tile);
+    color: var(--ink);
+    font-size: 0.85rem;
+  }
+  .tile.long { font-size: 0.72rem; }
+  .tile.xlong { font-size: 0.64rem; }
+  .tile { overflow-wrap: normal; word-break: normal; padding: 2px 4px; min-width: 0; overflow: hidden; }
+  .tile.sel { background: var(--tile-sel); color: #fff; transform: scale(0.96); }
+  .tile:focus-visible { outline: 2px solid #1a1a18; outline-offset: 2px; }
+
+  .mistakes {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .mistakes-label { font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--muted); }
+  .dots { display: flex; gap: 8px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: var(--tile-sel); }
+  .dot.off { background: var(--dot-off); }
+
+  .end-msg {
+    text-align: center;
+    font-family: system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 8px 0 14px;
+  }
+
+  .controls { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+  .btn {
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 22px;
+    border: 1px solid var(--ink);
+    cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.solid { background: var(--ink); color: #fff; padding: 10px 20px; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn:focus-visible { outline: 2px solid #1a1a18; outline-offset: 2px; }
+
+  @keyframes shk {
+    0%,100% { transform: translateX(0); }
+    20%,60% { transform: translateX(-6px); }
+    40%,80% { transform: translateX(6px); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.96); }
+    45% { transform: scale(1.12); background: #5c5c58; }
+    100% { transform: scale(0.96); }
+  }
+  @keyframes rowIn {
+    0% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @media (max-width: 360px) {
+    .page { padding: 20px 10px; }
+    .grid { gap: 5px; }
+    .tile { padding: 1px 2px; letter-spacing: 0; }
+    .controls { gap: 6px; }
+    .btn { padding: 9px 13px; }
+    .btn.solid { padding: 9px 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001s !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="frame">
+    <header>
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 class="title" id="title"></h1>
+      <p class="sub" id="sub"></p>
+    </header>
+
+    <div class="status-slot" id="statusSlot"></div>
+    <div class="solved-stack" id="solvedStack"></div>
+    <div class="grid" id="grid"></div>
+    <div id="belowGrid"></div>
+    <div class="controls" id="controls"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — the only block you change to make a new puzzle.
+   ============================================================ */
+const CONFIG = {
+  eyebrow: "RESEARCH METHODS EDITION",
+  title: "Connections",
+  subtitle: "Group the sixteen terms into four hidden sets of four.",
+  groups: [
+    {
+      name: "Sections of a research study",
+      words: ["INTRODUCTION", "METHODS", "RESULTS", "DISCUSSION"],
+      tier: 1,
+    },
+    {
+      name: "Types of qualitative data",
+      words: ["TEXT", "VIDEO", "AUDIO", "IMAGE"],
+      tier: 3,
+    },
+    {
+      name: "Data collection methods",
+      words: ["SURVEY", "INTERVIEW", "FOCUS GROUP", "OBSERVATION"],
+      tier: 2,
+    },
+    {
+      name: "Reference management software",
+      words: ["ZOTERO", "MENDELEY", "ENDNOTE", "REFWORKS"],
+      tier: 0,
+    },
+  ],
+};
+
+/* Row colors by tier [easiest -> hardest]. */
+const TIER_BORDERS = ["#E4B93C", "#8FB04A", "#5B8FC7", "#9B6FC4"]; // saturated: border
+const TIER_FILLS   = ["#F4E7B8", "#DCE7BC", "#CBDDEF", "#DDCDEE"]; // pastel: fill
+
+/* ============================================================
+   PUZZLE ENGINE — no need to edit below this line.
+   ============================================================ */
+const GROUPS = CONFIG.groups;
+const ALL_WORDS = GROUPS.flatMap((g) => g.words);
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const state = {
+  board: shuffle(ALL_WORDS),
+  selected: [],
+  solved: [],       // group objects, in the order the player found them
+  mistakes: 0,
+  status: "",
+  won: false,
+  lost: false,
+  revealed: false,
+  locked: false,    // true during the solve animation
+  pastGuesses: [],
+};
+
+const el = {
+  eyebrow: document.getElementById("eyebrow"),
+  title: document.getElementById("title"),
+  sub: document.getElementById("sub"),
+  statusSlot: document.getElementById("statusSlot"),
+  solvedStack: document.getElementById("solvedStack"),
+  grid: document.getElementById("grid"),
+  belowGrid: document.getElementById("belowGrid"),
+  controls: document.getElementById("controls"),
+};
+
+function groupOf(word) {
+  return GROUPS.find((g) => g.words.includes(word));
+}
+function isSolved(word) {
+  return state.solved.some((g) => g.words.includes(word));
+}
+function remaining() {
+  return state.board.filter((w) => !isSolved(w));
+}
+
+/* ---------- header ---------- */
+function renderHeader() {
+  if (CONFIG.eyebrow) el.eyebrow.textContent = CONFIG.eyebrow.toUpperCase();
+  else el.eyebrow.remove();
+  el.title.textContent = CONFIG.title;
+  if (CONFIG.subtitle) el.sub.textContent = CONFIG.subtitle;
+  else el.sub.remove();
+}
+
+/* ---------- status pill ---------- */
+function renderStatus() {
+  el.statusSlot.innerHTML = "";
+  let text = null, win = false;
+  if (state.won) { text = "Brilliant! All four groups solved."; win = true; }
+  else if (state.status) { text = state.status; }
+  if (text) {
+    const span = document.createElement("span");
+    span.className = "status" + (win ? " win" : "");
+    span.textContent = text;
+    el.statusSlot.appendChild(span);
+  }
+}
+
+/* ---------- solved rows (appended incrementally) ---------- */
+function appendSolvedRow(group, animate) {
+  const row = document.createElement("div");
+  row.className = "solved-row" + (animate ? " animate" : "");
+  row.style.background = TIER_FILLS[group.tier];
+  row.style.border = "2px solid " + TIER_BORDERS[group.tier];
+
+  const name = document.createElement("div");
+  name.className = "solved-name";
+  name.textContent = group.name.toUpperCase();
+
+  const words = document.createElement("div");
+  words.className = "solved-words";
+  words.textContent = group.words.join("   ·   ");
+
+  row.appendChild(name);
+  row.appendChild(words);
+  el.solvedStack.appendChild(row);
+}
+
+/* ---------- grid ---------- */
+function renderGrid() {
+  el.grid.innerHTML = "";
+  const rem = remaining();
+  if (rem.length === 0) {
+    el.grid.classList.add("hidden");
+    return;
+  }
+  el.grid.classList.remove("hidden");
+  rem.forEach((word) => {
+    const b = document.createElement("button");
+    b.className = "tile";
+    if (word.length > 9) b.classList.add("long");
+    if (Math.max(...word.split(" ").map((t) => t.length)) > 11) b.classList.add("xlong");
+    if (state.selected.includes(word)) b.classList.add("sel");
+    b.textContent = word;
+    b.dataset.word = word;
+    b.addEventListener("click", () => toggle(word));
+    el.grid.appendChild(b);
+  });
+  fitTiles();
+}
+
+/* Shrink each tile's text until every word fits without breaking. */
+function fitTiles() {
+  el.grid.querySelectorAll(".tile").forEach((t) => {
+    t.style.fontSize = "";
+    let size = parseFloat(getComputedStyle(t).fontSize);
+    while ((t.scrollWidth > t.clientWidth || t.scrollHeight > t.clientHeight) && size > 7) {
+      size -= 0.5;
+      t.style.fontSize = size + "px";
+    }
+  });
+}
+window.addEventListener("resize", fitTiles);
+
+/* ---------- below-grid: mistakes / end message ---------- */
+function renderBelow() {
+  el.belowGrid.innerHTML = "";
+  if (!state.won && !state.lost) {
+    const wrap = document.createElement("div");
+    wrap.className = "mistakes";
+    const label = document.createElement("span");
+    label.className = "mistakes-label";
+    label.textContent = "Mistakes remaining";
+    const dots = document.createElement("div");
+    dots.className = "dots";
+    for (let i = 0; i < 4; i++) {
+      const d = document.createElement("span");
+      d.className = "dot" + (i < 4 - state.mistakes ? "" : " off");
+      dots.appendChild(d);
+    }
+    wrap.appendChild(label);
+    wrap.appendChild(dots);
+    el.belowGrid.appendChild(wrap);
+  }
+  if (state.won) {
+    const msg = document.createElement("div");
+    msg.className = "end-msg";
+    msg.textContent =
+      state.mistakes === 0
+        ? "Solved without any mistakes."
+        : "Solved with " + state.mistakes + " mistake" + (state.mistakes === 1 ? "" : "s") + ".";
+    el.belowGrid.appendChild(msg);
+  }
+  if (state.lost && !state.revealed) {
+    const msg = document.createElement("div");
+    msg.className = "end-msg";
+    msg.textContent = "Out of guesses. Give it another try!";
+    el.belowGrid.appendChild(msg);
+  }
+}
+
+/* ---------- controls ---------- */
+function renderControls() {
+  el.controls.innerHTML = "";
+  const mk = (label, cls, onClick, disabled) => {
+    const b = document.createElement("button");
+    b.className = "btn " + cls;
+    b.textContent = label;
+    if (disabled) b.disabled = true;
+    else b.addEventListener("click", onClick);
+    return b;
+  };
+  if (!state.won && !state.lost) {
+    el.controls.appendChild(mk("Shuffle", "ghost", shuffleBoard, false));
+    el.controls.appendChild(mk("Deselect", "ghost", deselect, state.selected.length === 0));
+    el.controls.appendChild(mk("Submit", "solid", submit, state.selected.length !== 4));
+  } else {
+    el.controls.appendChild(mk("Play again", "solid", reset, false));
+  }
+}
+
+/* ---------- actions ---------- */
+function toggle(word) {
+  if (state.won || state.lost || state.locked) return;
+  if (state.selected.includes(word)) {
+    state.selected = state.selected.filter((w) => w !== word);
+  } else if (state.selected.length < 4) {
+    state.selected.push(word);
+  }
+  state.status = "";
+  renderStatus();
+  renderGrid();
+  renderControls();
+}
+
+function submit() {
+  if (state.selected.length !== 4 || state.locked) return;
+  const match = GROUPS.find((g) => state.selected.every((w) => g.words.includes(w)));
+  if (match) {
+    // Pop the four correct tiles, then slide the solved row in.
+    state.locked = true;
+    state.status = "";
+    renderStatus();
+    const order = [...state.selected];
+    order.forEach((w, i) => {
+      const btn = el.grid.querySelector('.tile[data-word="' + cssEscape(w) + '"]');
+      if (btn) btn.style.animation = "pop 0.32s ease " + (i * 0.08) + "s";
+    });
+    setTimeout(() => {
+      state.solved.push(match);
+      state.selected = [];
+      state.locked = false;
+      appendSolvedRow(match, true);
+      if (state.solved.length === 4) state.won = true;
+      renderStatus();
+      renderGrid();
+      renderBelow();
+      renderControls();
+    }, 550);
+  } else {
+    const key = [...state.selected].sort().join("|");
+    if (state.pastGuesses.includes(key)) {
+      shakeGrid();
+      state.status = "Already guessed. Try a different group.";
+      renderStatus();
+      return;
+    }
+    state.pastGuesses.push(key);
+    const bestOverlap = Math.max(
+      ...GROUPS.map((g) => state.selected.filter((w) => g.words.includes(w)).length)
+    );
+    shakeGrid();
+    state.mistakes += 1;
+    state.status = bestOverlap === 3 ? "One away…" : "Not a group.";
+    if (state.mistakes >= 4) {
+      state.lost = true;
+      state.status = "";
+    }
+    renderStatus();
+    renderBelow();
+    renderControls();
+  }
+}
+
+function shakeGrid() {
+  el.grid.classList.add("shake");
+  setTimeout(() => el.grid.classList.remove("shake"), 500);
+}
+
+function deselect() {
+  state.selected = [];
+  state.status = "";
+  renderStatus();
+  renderGrid();
+  renderControls();
+}
+
+function shuffleBoard() {
+  state.board = shuffle(state.board);
+  renderGrid();
+}
+
+function reset() {
+  state.board = shuffle(ALL_WORDS);
+  state.selected = [];
+  state.solved = [];
+  state.mistakes = 0;
+  state.status = "";
+  state.won = false;
+  state.lost = false;
+  state.revealed = false;
+  state.locked = false;
+  state.pastGuesses = [];
+  el.solvedStack.innerHTML = "";
+  renderStatus();
+  renderGrid();
+  renderBelow();
+  renderControls();
+}
+
+/* Minimal CSS.escape fallback for older browsers (our words are letters/spaces). */
+function cssEscape(s) {
+  if (window.CSS && CSS.escape) return CSS.escape(s);
+  return s.replace(/["\\]/g, "\\$&");
+}
+
+/* ---------- init ---------- */
+renderHeader();
+renderStatus();
+renderGrid();
+renderBelow();
+renderControls();
+</script>
+</body>
+</html>
